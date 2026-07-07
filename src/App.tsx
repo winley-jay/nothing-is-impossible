@@ -1536,31 +1536,35 @@ function MerchCard({ data, item }: { data: SiteData; item: MerchItem }) {
         )}
       </div>
       <div className="merch-copy">
-        <div>
+        <div className="merch-meta">
           <small>{isBook ? "Book" : "Clothing"}</small>
-          <span>{item.stock > 0 ? `${item.stock} available` : "Sold out"}</span>
+          <span className={isSoldOut ? "sold-out-text" : ""}>{item.stock > 0 ? `${item.stock} available` : "Sold out"}</span>
+        </div>
+        <div className="merch-details">
           <h3>{item.title}</h3>
           <p>{item.description || (isBook ? "Book details coming soon." : "Clothing details coming soon.")}</p>
         </div>
-        <strong>{formatMoney(item.currency, item.price)}</strong>
-        <label className="quantity-control">
-          Quantity
+        <div className="merch-purchase">
+          <strong>{formatMoney(item.currency, item.price)}</strong>
+          <label className="quantity-control">
+            Quantity
             <input
               min="1"
-            max={Math.max(1, item.stock)}
-            type="number"
-            value={quantity}
-            disabled={isSoldOut}
-            onChange={(e) => setQuantity(Math.min(Math.max(1, Number(e.target.value) || 1), Math.max(1, item.stock)))}
-          />
-        </label>
-        {orderLink && !isSoldOut ? (
-          <a className="buy-ticket-button" href={orderLink} target="_blank" rel="noreferrer">
-            {isBook ? "Order book" : "Order item"}
-          </a>
-        ) : (
-          <span className="buy-ticket-button disabled">{isSoldOut ? "Sold out" : "WhatsApp number needed"}</span>
-        )}
+              max={Math.max(1, item.stock)}
+              type="number"
+              value={quantity}
+              disabled={isSoldOut}
+              onChange={(e) => setQuantity(Math.min(Math.max(1, Number(e.target.value) || 1), Math.max(1, item.stock)))}
+            />
+          </label>
+          {orderLink && !isSoldOut ? (
+            <a className="buy-ticket-button" href={orderLink} target="_blank" rel="noreferrer">
+              {isBook ? "Order book" : "Order item"}
+            </a>
+          ) : (
+            <span className="buy-ticket-button disabled">{isSoldOut ? "Sold out" : "WhatsApp number needed"}</span>
+          )}
+        </div>
       </div>
     </article>
   );
