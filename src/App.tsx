@@ -16,7 +16,7 @@ import {
   Video,
 } from "lucide-react";
 import { createClient, type Session } from "@supabase/supabase-js";
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, type CSSProperties, FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 
 type Release = {
   id: string;
@@ -127,6 +127,9 @@ const getLoveDeviceId = () => {
   localStorage.setItem(LOVE_DEVICE_KEY, nextId);
   return nextId;
 };
+
+const imageFillStyle = (image?: string): CSSProperties =>
+  image ? ({ "--image-src": `url("${image.replace(/"/g, '\\"')}")` } as CSSProperties) : {};
 
 const emptyRelease: Omit<Release, "id"> = {
   title: "",
@@ -525,7 +528,7 @@ function PublicSite({
           </div>
           <p className="love-note">{formatCompactCount(data.loveCount)} people send love</p>
         </div>
-        <div className="hero-visual">
+        <div className="hero-visual image-fill-frame" style={imageFillStyle(data.heroImage)}>
           {data.heroImage ? (
             <img src={data.heroImage} alt={`${data.artistName} portrait`} />
           ) : (
@@ -557,16 +560,30 @@ function PublicSite({
           <p className="eyebrow">New song releases</p>
           <h2>Listen to what is next</h2>
         </div>
-        {featuredRelease ? <FeaturedRelease release={featuredRelease} /> : <p className="muted">No upcoming song has been added yet.</p>}
+        {featuredRelease ? (
+          <FeaturedRelease release={featuredRelease} />
+        ) : (
+          <EmptyStateCard
+            icon={<Music2 size={24} />}
+            title="Upcoming song coming soon"
+            message="When the next release is added in Studio, its cover, date, and story will appear here."
+          />
+        )}
         <div className="section-heading compact-heading">
           <p className="eyebrow">Recently released</p>
           <h2>Available to listen</h2>
         </div>
         <div className="release-grid">
-          {releasedSongs.length === 0 && <p className="muted">No released songs have been added yet.</p>}
+          {releasedSongs.length === 0 && (
+            <EmptyStateCard
+              icon={<Music2 size={24} />}
+              title="No released songs yet"
+              message="Released tracks and listening links will appear here once they are added."
+            />
+          )}
           {releasedSongs.map((release) => (
             <article className="release-card" key={release.id}>
-              <div className="cover">
+              <div className="cover image-fill-frame" style={imageFillStyle(release.cover)}>
                 {release.cover ? <img src={release.cover} alt={`${release.title} cover`} /> : <Music2 size={38} />}
               </div>
               <div>
@@ -592,7 +609,13 @@ function PublicSite({
           <h2>Where he is playing</h2>
         </div>
         <div className="event-list">
-          {data.events.length === 0 && <p className="muted">No upcoming events yet.</p>}
+          {data.events.length === 0 && (
+            <EmptyStateCard
+              icon={<CalendarDays size={24} />}
+              title="No upcoming events yet"
+              message="Show dates, ticket prices, and tickets left will appear here when a live event is added."
+            />
+          )}
           {data.events.map((event) => (
             <article className="event-row" key={event.id}>
               <div className="date-pill">
@@ -621,10 +644,11 @@ function PublicSite({
           <h2>Books and apparel</h2>
         </div>
         {data.merch.length === 0 ? (
-          <div className="coming-soon-panel">
-            <h3>Shop coming soon</h3>
-            <p>Books, clothing, and meaningful items will appear here when they are ready.</p>
-          </div>
+          <EmptyStateCard
+            icon={<Ticket size={24} />}
+            title="Shop coming soon"
+            message="Books, clothing, and meaningful items will appear here when they are ready."
+          />
         ) : (
           <div className="merch-grid">
             {data.merch.map((item) => (
@@ -635,7 +659,7 @@ function PublicSite({
       </section>
 
       <section id="story" className="story-section">
-        <div className="story-image">
+        <div className="story-image image-fill-frame" style={imageFillStyle(data.story.image)}>
           {data.story.image ? <img src={data.story.image} alt="Story portrait" /> : <CalendarDays size={54} />}
         </div>
         <div>
@@ -1405,6 +1429,18 @@ function TicketMeter({ event }: { event: EventItem }) {
   );
 }
 
+function EmptyStateCard({ icon, title, message }: { icon: ReactNode; title: string; message: string }) {
+  return (
+    <div className="empty-state-card">
+      <span>{icon}</span>
+      <div>
+        <h3>{title}</h3>
+        <p>{message}</p>
+      </div>
+    </div>
+  );
+}
+
 function MerchCard({ data, item }: { data: SiteData; item: MerchItem }) {
   const [quantity, setQuantity] = useState(1);
   const isSoldOut = item.stock <= 0;
@@ -1413,7 +1449,7 @@ function MerchCard({ data, item }: { data: SiteData; item: MerchItem }) {
 
   return (
     <article className={`merch-card ${item.category} ${isSoldOut ? "sold-out-card" : ""}`}>
-      <div className="merch-image">
+      <div className="merch-image image-fill-frame" style={imageFillStyle(item.image)}>
         {item.image ? <img src={item.image} alt={item.title} /> : <span>{isBook ? "Book" : "Martin"}</span>}
       </div>
       <div className="merch-copy">
@@ -1450,7 +1486,7 @@ function MerchCard({ data, item }: { data: SiteData; item: MerchItem }) {
 function FeaturedRelease({ release }: { release: Release }) {
   return (
     <article className="featured-release">
-      <div className="featured-release-thumb">
+      <div className="featured-release-thumb image-fill-frame" style={imageFillStyle(release.cover)}>
         {release.cover ? <img src={release.cover} alt={`${release.title} thumbnail`} /> : <Music2 size={58} />}
       </div>
       <div className="featured-release-copy">
