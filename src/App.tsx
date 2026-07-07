@@ -497,7 +497,7 @@ function PublicSite({
       <ThemeStrip theme={data.backgroundTheme} />
       <nav className="topbar glass">
         <button className="brand-button" onClick={() => onNavigate("/")}>
-          <span className="brand-mark">Martin</span>
+          <span className="brand-mark">WinleyJay</span>
           <span>{data.artistName}</span>
         </button>
         <div className="nav-links">
@@ -772,7 +772,7 @@ function AdminPage({
       <main className="admin-login">
         <form className="login-panel glass" onSubmit={login}>
           <button type="button" className="brand-button" onClick={() => onNavigate("/")}>
-            <span className="brand-mark">Martin</span>
+            <span className="brand-mark">WinleyJay</span>
             <span>{data.artistName}</span>
           </button>
           <div className="login-copy">
@@ -816,7 +816,7 @@ function AdminPage({
     <main className="admin-shell">
       <aside className="admin-sidebar glass">
         <div className="brand-button admin-locked-brand">
-          <span className="brand-mark">Martin</span>
+          <span className="brand-mark">WinleyJay</span>
           <span>Studio locked</span>
         </div>
         <div>
@@ -1330,7 +1330,7 @@ function MidnightHold({ data, onNavigate }: { data: SiteData; onNavigate: (path:
   return (
     <main className={`midnight-hold ${data.backgroundTheme}`}>
       <button className="brand-button midnight-brand" onClick={() => onNavigate(ADMIN_PATH)}>
-        <span className="brand-mark">Martin</span>
+        <span className="brand-mark">WinleyJay</span>
         <span>{data.artistName}</span>
       </button>
       <section className="midnight-panel glass">

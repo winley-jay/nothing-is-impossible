@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Martin">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="WinleyJay">
   <rect width="512" height="512" rx="116" fill="#1d1d1f"/>
-  <path fill="#fff" d="M132 348V164h52l72 104 72-104h52v184h-52V247l-58 82h-28l-58-82v101h-52Z"/>
-  <path fill="#aeb4bf" d="M153 386h206v18H153z"/>
+  <text x="256" y="306" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="142" font-weight="900" letter-spacing="-8" text-anchor="middle">WJ</text>
+  <path fill="#aeb4bf" d="M157 360h198v18H157z"/>
 </svg>
