@@ -116,6 +116,7 @@ const LOVE_SENT_KEY = "nothing-is-impossible-love-sent-main";
 const ADMIN_PATH = "/studio-gift";
 const CONTENT_ID = "main";
 const STORAGE_BUCKET = "site-images";
+const MAX_FAN_MESSAGES = 3;
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
@@ -536,10 +537,7 @@ function PublicSite({
           {data.heroImage ? (
             <img src={data.heroImage} alt={`${data.artistName} portrait`} />
           ) : (
-            <div className="photo-placeholder">
-              <Mic2 size={56} />
-              <span>Add his portrait in admin</span>
-            </div>
+            <ImagePlaceholder label="Portrait coming soon" />
           )}
         </div>
       </section>
@@ -588,7 +586,7 @@ function PublicSite({
           {releasedSongs.map((release) => (
             <article className="release-card" key={release.id}>
               <div className="cover image-fill-frame" style={imageFillStyle(release.cover)}>
-                {release.cover ? <img src={release.cover} alt={`${release.title} cover`} /> : <Music2 size={38} />}
+                {release.cover ? <img src={release.cover} alt={`${release.title} cover`} /> : <ImagePlaceholder label="Album art coming soon" compact />}
               </div>
               <div>
                 <p>{formatDate(release.date)}</p>
@@ -674,7 +672,7 @@ function PublicSite({
 
       <section id="story" className="story-section">
         <div className="story-image image-fill-frame" style={imageFillStyle(data.story.image)}>
-          {data.story.image ? <img src={data.story.image} alt="Story portrait" /> : <CalendarDays size={54} />}
+          {data.story.image ? <img src={data.story.image} alt="Story portrait" /> : <ImagePlaceholder label="Story image coming soon" />}
         </div>
         <div>
           <p className="eyebrow">My story</p>
@@ -1245,6 +1243,9 @@ function AdminPage({
             className="stack"
             onSubmit={(e) => {
               e.preventDefault();
+              const reachedMessageLimit = !editingPostId && data.posts.length >= MAX_FAN_MESSAGES;
+              if (reachedMessageLimit) return;
+
               const nextPosts = editingPostId
                 ? data.posts.map((item) => (item.id === editingPostId ? { ...post, id: editingPostId } : item))
                 : [{ ...post, id: crypto.randomUUID() }, ...data.posts];
@@ -1267,9 +1268,12 @@ function AdminPage({
               Message
               <textarea required value={post.message} onChange={(e) => setPost({ ...post, message: e.target.value })} />
             </label>
-            <button className="primary-button" type="submit">
+            {!editingPostId && data.posts.length >= MAX_FAN_MESSAGES && (
+              <p className="admin-note">Fan messages are limited to {MAX_FAN_MESSAGES}. Edit or delete an existing message to add another.</p>
+            )}
+            <button className="primary-button" type="submit" disabled={!editingPostId && data.posts.length >= MAX_FAN_MESSAGES}>
               {editingPostId ? <Pencil size={18} /> : <Send size={18} />}
-              {editingPostId ? "Save message" : "Publish"}
+              {editingPostId ? "Save message" : data.posts.length >= MAX_FAN_MESSAGES ? "Limit reached" : "Publish"}
             </button>
             {editingPostId && (
               <button
@@ -1481,6 +1485,15 @@ function EmptyStateCard({ icon, title, message }: { icon: ReactNode; title: stri
   );
 }
 
+function ImagePlaceholder({ label, compact = false }: { label: string; compact?: boolean }) {
+  return (
+    <div className={`image-placeholder ${compact ? "compact" : ""}`}>
+      <ImagePlus size={compact ? 18 : 26} />
+      <span>{label}</span>
+    </div>
+  );
+}
+
 function MerchCard({ data, item }: { data: SiteData; item: MerchItem }) {
   const [quantity, setQuantity] = useState(1);
   const isSoldOut = item.stock <= 0;
@@ -1490,7 +1503,11 @@ function MerchCard({ data, item }: { data: SiteData; item: MerchItem }) {
   return (
     <article className={`merch-card ${item.category} ${isSoldOut ? "sold-out-card" : ""}`}>
       <div className="merch-image image-fill-frame" style={imageFillStyle(item.image)}>
-        {item.image ? <img src={item.image} alt={item.title} /> : <span>{isBook ? "Book" : "Martin"}</span>}
+        {item.image ? (
+          <img src={item.image} alt={item.title} />
+        ) : (
+          <ImagePlaceholder label={isBook ? "Book cover coming soon" : "Merch image coming soon"} compact={isBook} />
+        )}
       </div>
       <div className="merch-copy">
         <div>
@@ -1527,7 +1544,7 @@ function FeaturedRelease({ release }: { release: Release }) {
   return (
     <article className="featured-release">
       <div className="featured-release-thumb image-fill-frame" style={imageFillStyle(release.cover)}>
-        {release.cover ? <img src={release.cover} alt={`${release.title} thumbnail`} /> : <Music2 size={58} />}
+        {release.cover ? <img src={release.cover} alt={`${release.title} thumbnail`} /> : <ImagePlaceholder label="Album art coming soon" />}
       </div>
       <div className="featured-release-copy">
         <p className="eyebrow">Upcoming work</p>
