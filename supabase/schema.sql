@@ -120,6 +120,9 @@ values (
 )
 on conflict (id) do nothing;
 
+delete from public.fan_love_devices
+where content_id = 'main';
+
 update public.site_content
 set
   content = jsonb_set(content, '{loveCount}', '0'::jsonb, true),

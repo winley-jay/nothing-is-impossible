@@ -537,6 +537,14 @@ button:disabled,
   font-weight: 700;
 }
 
+.love-error {
+  max-width: 430px;
+  margin-top: 10px;
+  color: #b42318;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
 .hero-visual {
   aspect-ratio: 0.78;
   border-radius: 34px;
@@ -924,15 +932,31 @@ button:disabled,
   font-weight: 800;
 }
 
-.release-listen-button {
+.release-links,
+.release-links-empty {
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.release-links.compact,
+.release-links-empty.compact {
   position: absolute;
   right: 16px;
   bottom: 14px;
+  max-width: calc(100% - 178px);
+  justify-content: flex-end;
+}
+
+.release-links a,
+.release-links-empty {
   min-height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 14px;
+  padding: 0 13px;
   border-radius: 999px;
   color: #ffffff;
   background: #1d1d1f;
@@ -941,7 +965,14 @@ button:disabled,
   box-shadow: 0 10px 24px rgba(29, 29, 31, 0.16);
 }
 
-.release-listen-button.disabled,
+.release-links.compact a,
+.release-links-empty.compact {
+  min-height: 34px;
+  padding: 0 11px;
+  font-size: 0.8rem;
+}
+
+.release-links-empty,
 .secondary-button.disabled {
   color: #73757d;
   background: transparent;
@@ -1959,10 +1990,18 @@ textarea:focus {
     padding: 4px;
   }
 
-  .release-listen-button {
+  .release-links.compact,
+  .release-links-empty.compact {
     position: static;
     width: 100%;
+    max-width: none;
     margin-top: 8px;
+    justify-content: flex-start;
+  }
+
+  .release-links.compact a,
+  .release-links-empty.compact {
+    flex: 1 1 120px;
   }
 
   .event-row {

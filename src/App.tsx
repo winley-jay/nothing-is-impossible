@@ -24,6 +24,9 @@ type Release = {
   date: string;
   platform: string;
   link: string;
+  spotifyLink: string;
+  youtubeLink: string;
+  appleMusicLink: string;
   cover: string;
   description: string;
   status: "upcoming" | "released";
@@ -138,6 +141,9 @@ const emptyRelease: Omit<Release, "id"> = {
   date: "",
   platform: "",
   link: "",
+  spotifyLink: "",
+  youtubeLink: "",
+  appleMusicLink: "",
   cover: "",
   description: "",
   status: "upcoming",
@@ -220,6 +226,9 @@ const seedData: SiteData = {
       date: "2026-08-02",
       platform: "Spotify, Apple Music",
       link: "",
+      spotifyLink: "",
+      youtubeLink: "",
+      appleMusicLink: "",
       cover: "",
       description:
         "A song about waking up with hope again, written from the quiet moments after the hardest parts of the journey.",
@@ -231,6 +240,9 @@ const seedData: SiteData = {
       date: "2026-06-14",
       platform: "All platforms",
       link: "",
+      spotifyLink: "",
+      youtubeLink: "",
+      appleMusicLink: "",
       cover: "",
       description:
         "An anthem for anyone rebuilding, healing, and choosing to stand tall after life tried to knock them down.",
@@ -314,6 +326,7 @@ export function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasSentLove, setHasSentLove] = useState(() => localStorage.getItem(LOVE_SENT_KEY) === "true");
+  const [loveError, setLoveError] = useState("");
   const isAdmin = Boolean(session);
 
   useEffect(() => {
@@ -374,6 +387,7 @@ export function App() {
     if (hasSentLove) return;
 
     const deviceId = getLoveDeviceId();
+    setLoveError("");
 
     if (supabase) {
       const { data: loveCount, error } = await supabase.rpc("increment_love_count", {
@@ -386,6 +400,10 @@ export function App() {
         setHasSentLove(true);
         return;
       }
+
+      console.error("Could not send love", error);
+      setLoveError("Love could not be saved. Please try again in a moment.");
+      return;
     }
 
     const next = { ...data, loveCount: data.loveCount + 1 };
@@ -430,24 +448,26 @@ export function App() {
     if (window.location.pathname !== "/") {
       window.history.replaceState({}, "", "/");
     }
-    return <PublicSite data={data} hasSentLove={hasSentLove} onNavigate={navigate} onLove={sendLove} />;
+    return <PublicSite data={data} hasSentLove={hasSentLove} loveError={loveError} onNavigate={navigate} onLove={sendLove} />;
   }
 
   if (route.startsWith(ADMIN_PATH)) {
     return renderAdmin();
   }
 
-  return <PublicSite data={data} hasSentLove={hasSentLove} onNavigate={navigate} onLove={sendLove} />;
+  return <PublicSite data={data} hasSentLove={hasSentLove} loveError={loveError} onNavigate={navigate} onLove={sendLove} />;
 }
 
 function PublicSite({
   data,
   hasSentLove,
+  loveError,
   onNavigate,
   onLove,
 }: {
   data: SiteData;
   hasSentLove: boolean;
+  loveError: string;
   onNavigate: (path: string) => void;
   onLove: () => void;
 }) {
@@ -532,6 +552,7 @@ function PublicSite({
             </a>
           </div>
           <p className="love-note">{formatCompactCount(data.loveCount)} people send love</p>
+          {loveError && <p className="love-error">{loveError}</p>}
         </div>
         <div className="hero-visual">
           {data.heroImage ? (
@@ -593,13 +614,7 @@ function PublicSite({
                 <h3>{release.title}</h3>
                 <span>{release.platform}</span>
               </div>
-              {release.link ? (
-                <a className="release-listen-button" href={release.link} target="_blank" rel="noreferrer">
-                  Listen now
-                </a>
-              ) : (
-                <span className="release-listen-button disabled">Link soon</span>
-              )}
+              <ReleaseLinks release={release} compact />
             </article>
           ))}
         </div>
@@ -955,8 +970,16 @@ function AdminPage({
                 <input value={release.platform} onChange={(e) => setRelease({ ...release, platform: e.target.value })} />
               </label>
               <label>
-                Listen link
-                <input value={release.link} onChange={(e) => setRelease({ ...release, link: e.target.value })} />
+                Spotify link
+                <input value={release.spotifyLink} onChange={(e) => setRelease({ ...release, spotifyLink: e.target.value })} />
+              </label>
+              <label>
+                YouTube link
+                <input value={release.youtubeLink} onChange={(e) => setRelease({ ...release, youtubeLink: e.target.value })} />
+              </label>
+              <label>
+                Apple Music link
+                <input value={release.appleMusicLink} onChange={(e) => setRelease({ ...release, appleMusicLink: e.target.value })} />
               </label>
             </div>
             <label>
@@ -993,6 +1016,9 @@ function AdminPage({
                 date: item.date,
                 platform: item.platform,
                 link: item.link,
+                spotifyLink: item.spotifyLink,
+                youtubeLink: item.youtubeLink,
+                appleMusicLink: item.appleMusicLink,
                 cover: item.cover,
                 description: item.description,
                 status: item.status,
@@ -1557,15 +1583,27 @@ function FeaturedRelease({ release }: { release: Release }) {
         <p>
           {release.platform || "Streaming details coming soon"} · {formatDate(release.date)}
         </p>
-        {release.link ? (
-          <a className="primary-button" href={release.link} target="_blank" rel="noreferrer">
-            Listen now
-          </a>
-        ) : (
-          <span className="secondary-button disabled">Listen link coming soon</span>
-        )}
+        <ReleaseLinks release={release} />
       </div>
     </article>
+  );
+}
+
+function ReleaseLinks({ release, compact = false }: { release: Release; compact?: boolean }) {
+  const links = getReleaseLinks(release);
+
+  if (links.length === 0) {
+    return <span className={`release-links-empty ${compact ? "compact" : ""}`}>Links soon</span>;
+  }
+
+  return (
+    <div className={`release-links ${compact ? "compact" : ""}`}>
+      {links.map((link) => (
+        <a href={link.href} target="_blank" rel="noreferrer" key={link.label}>
+          {link.label}
+        </a>
+      ))}
+    </div>
   );
 }
 
@@ -1799,6 +1837,9 @@ function normalizeData(input: Partial<SiteData>): SiteData {
     },
     releases: (parsed.releases ?? seedData.releases).map((release) => ({
       ...release,
+      spotifyLink: release.spotifyLink ?? release.link ?? "",
+      youtubeLink: release.youtubeLink ?? "",
+      appleMusicLink: release.appleMusicLink ?? "",
       description: release.description ?? seedData.releases.find((seedRelease) => seedRelease.id === release.id)?.description ?? "",
       status:
         release.status ??
@@ -1851,6 +1892,17 @@ function formatCompactCount(value: number) {
   });
 
   return formatter.format(value).toUpperCase();
+}
+
+function getReleaseLinks(release: Release) {
+  const platformLinks = [
+    { label: "Spotify", href: release.spotifyLink },
+    { label: "YouTube", href: release.youtubeLink },
+    { label: "Apple Music", href: release.appleMusicLink },
+  ].filter((link) => Boolean(link.href));
+
+  if (platformLinks.length > 0) return platformLinks;
+  return release.link ? [{ label: "Listen", href: release.link }] : [];
 }
 
 function buildWhatsAppTicketLink(data: SiteData, event: EventItem) {
