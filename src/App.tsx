@@ -36,6 +36,7 @@ type EventItem = {
   city: string;
   date: string;
   time: string;
+  eventType: "paid" | "free";
   ticketPrice: string;
   ticketCurrency: string;
   ticketLink: string;
@@ -147,6 +148,7 @@ const emptyEvent: Omit<EventItem, "id"> = {
   city: "",
   date: "",
   time: "",
+  eventType: "paid",
   ticketPrice: "",
   ticketCurrency: "R",
   ticketLink: "",
@@ -242,6 +244,7 @@ const seedData: SiteData = {
       city: "Johannesburg",
       date: "2026-08-21",
       time: "19:30",
+      eventType: "paid",
       ticketPrice: "180",
       ticketCurrency: "R",
       ticketLink: "",
@@ -255,6 +258,7 @@ const seedData: SiteData = {
       city: "Pretoria",
       date: "2026-10-05",
       time: "18:00",
+      eventType: "paid",
       ticketPrice: "250",
       ticketCurrency: "R",
       ticketLink: "",
@@ -613,7 +617,7 @@ function PublicSite({
             <EmptyStateCard
               icon={<CalendarDays size={24} />}
               title="No upcoming events yet"
-              message="Show dates, ticket prices, and tickets left will appear here when a live event is added."
+              message="Show dates, entry type, and ticket details will appear here when a live event is added."
             />
           )}
           {data.events.map((event) => (
@@ -623,15 +627,25 @@ function PublicSite({
                 <strong>{day(event.date)}</strong>
               </div>
               <div>
+                <span className={`event-type-badge ${event.eventType}`}>{event.eventType === "free" ? "Free event" : "Paid event"}</span>
                 <h3>{event.title}</h3>
                 <p>
                   {event.venue}, {event.city} at {event.time}
                 </p>
               </div>
               <div className="ticket">
-                <TicketMeter event={event} />
-                <strong>{formatMoney(event.ticketCurrency, event.ticketPrice)}</strong>
-                <TicketActions data={data} event={event} />
+                {event.eventType === "free" ? (
+                  <div className="free-event-card">
+                    <span>No tickets required</span>
+                    <strong>Free entry</strong>
+                  </div>
+                ) : (
+                  <>
+                    <TicketMeter event={event} />
+                    <strong>{formatMoney(event.ticketCurrency, event.ticketPrice)}</strong>
+                    <TicketActions data={data} event={event} />
+                  </>
+                )}
               </div>
             </article>
           ))}
@@ -995,10 +1009,13 @@ function AdminPage({
             className="stack"
             onSubmit={(e) => {
               e.preventDefault();
+              const isPaidEvent = event.eventType === "paid";
               const normalizedEvent = {
                 ...event,
-                ticketTotal: Number(event.ticketTotal) || 0,
-                ticketsLeft: Math.min(Number(event.ticketsLeft) || 0, Number(event.ticketTotal) || 0),
+                ticketPrice: isPaidEvent ? event.ticketPrice : "",
+                ticketLink: isPaidEvent ? event.ticketLink : "",
+                ticketTotal: isPaidEvent ? Number(event.ticketTotal) || 0 : 0,
+                ticketsLeft: isPaidEvent ? Math.min(Number(event.ticketsLeft) || 0, Number(event.ticketTotal) || 0) : 0,
               };
               const nextEvents = editingEventId
                 ? data.events.map((item) => (item.id === editingEventId ? { ...normalizedEvent, id: editingEventId } : item))
@@ -1030,41 +1047,63 @@ function AdminPage({
                 <input value={event.city} onChange={(e) => setEvent({ ...event, city: e.target.value })} />
               </label>
               <label>
-                Ticket price
-                <input value={event.ticketPrice} onChange={(e) => setEvent({ ...event, ticketPrice: e.target.value })} />
-              </label>
-              <label>
-                Ticket currency
-                <select value={event.ticketCurrency} onChange={(e) => setEvent({ ...event, ticketCurrency: e.target.value })}>
-                  {currencies.map((currency) => (
-                    <option value={currency.value} key={currency.value}>
-                      {currency.label}
-                    </option>
-                  ))}
+                Event type
+                <select
+                  value={event.eventType}
+                  onChange={(e) =>
+                    setEvent({
+                      ...event,
+                      eventType: e.target.value as EventItem["eventType"],
+                      ...(e.target.value === "free"
+                        ? { ticketPrice: "", ticketLink: "", ticketTotal: 0, ticketsLeft: 0 }
+                        : {}),
+                    })
+                  }
+                >
+                  <option value="paid">Paid event</option>
+                  <option value="free">Free event</option>
                 </select>
               </label>
-              <label>
-                Ticket link
-                <input value={event.ticketLink} onChange={(e) => setEvent({ ...event, ticketLink: e.target.value })} />
-              </label>
-              <label>
-                Total tickets
-                <input
-                  min="0"
-                  type="number"
-                  value={event.ticketTotal}
-                  onChange={(e) => setEvent({ ...event, ticketTotal: Number(e.target.value) })}
-                />
-              </label>
-              <label>
-                Tickets left
-                <input
-                  min="0"
-                  type="number"
-                  value={event.ticketsLeft}
-                  onChange={(e) => setEvent({ ...event, ticketsLeft: Number(e.target.value) })}
-                />
-              </label>
+              {event.eventType === "paid" && (
+                <>
+                  <label>
+                    Ticket price
+                    <input value={event.ticketPrice} onChange={(e) => setEvent({ ...event, ticketPrice: e.target.value })} />
+                  </label>
+                  <label>
+                    Ticket currency
+                    <select value={event.ticketCurrency} onChange={(e) => setEvent({ ...event, ticketCurrency: e.target.value })}>
+                      {currencies.map((currency) => (
+                        <option value={currency.value} key={currency.value}>
+                          {currency.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Ticket link
+                    <input value={event.ticketLink} onChange={(e) => setEvent({ ...event, ticketLink: e.target.value })} />
+                  </label>
+                  <label>
+                    Total tickets
+                    <input
+                      min="0"
+                      type="number"
+                      value={event.ticketTotal}
+                      onChange={(e) => setEvent({ ...event, ticketTotal: Number(e.target.value) })}
+                    />
+                  </label>
+                  <label>
+                    Tickets left
+                    <input
+                      min="0"
+                      type="number"
+                      value={event.ticketsLeft}
+                      onChange={(e) => setEvent({ ...event, ticketsLeft: Number(e.target.value) })}
+                    />
+                  </label>
+                </>
+              )}
             </div>
             <button className="primary-button" type="submit">
               {editingEventId ? <Pencil size={18} /> : <Plus size={18} />}
@@ -1093,6 +1132,7 @@ function AdminPage({
                 city: item.city,
                 date: item.date,
                 time: item.time,
+                eventType: item.eventType ?? "paid",
                 ticketPrice: item.ticketPrice,
                 ticketCurrency: item.ticketCurrency,
                 ticketLink: item.ticketLink,
@@ -1750,6 +1790,7 @@ function normalizeData(input: Partial<SiteData>): SiteData {
     })),
     events: (parsed.events ?? seedData.events).map((event) => ({
       ...event,
+      eventType: event.eventType ?? "paid",
       ticketCurrency: event.ticketCurrency ?? "R",
       ticketTotal: event.ticketTotal ?? seedData.events.find((seedEvent) => seedEvent.id === event.id)?.ticketTotal ?? 0,
       ticketsLeft: event.ticketsLeft ?? seedData.events.find((seedEvent) => seedEvent.id === event.id)?.ticketsLeft ?? 0,
@@ -1796,6 +1837,8 @@ function formatCompactCount(value: number) {
 }
 
 function buildWhatsAppTicketLink(data: SiteData, event: EventItem) {
+  if (event.eventType === "free") return "";
+
   const number = data.whatsappNumber.replace(/\D/g, "");
   if (!number) return "";
 
