@@ -587,6 +587,11 @@ button:disabled,
   object-fit: contain;
 }
 
+.hero-visual img {
+  object-fit: cover;
+  object-position: center top;
+}
+
 .photo-placeholder,
 .story-image {
   width: 100%;

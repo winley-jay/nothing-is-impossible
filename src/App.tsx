@@ -528,7 +528,7 @@ function PublicSite({
           </div>
           <p className="love-note">{formatCompactCount(data.loveCount)} people send love</p>
         </div>
-        <div className="hero-visual image-fill-frame" style={imageFillStyle(data.heroImage)}>
+        <div className="hero-visual">
           {data.heroImage ? (
             <img src={data.heroImage} alt={`${data.artistName} portrait`} />
           ) : (
