@@ -65,6 +65,6 @@ Production data is stored in Supabase:
 - Supabase Storage bucket `site-images` stores uploaded images.
 - Public visitors can read content.
 - Only admin users can update content or upload images.
-- Public love-button clicks use the `increment_love_count` RPC.
+- Public love-button clicks use the `increment_love_count` RPC and `fan_love_devices` table so each saved device can send love once.
 
 If Supabase environment variables are missing, the app falls back to local browser storage for development only.

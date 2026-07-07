@@ -12,8 +12,16 @@ create table if not exists public.admin_users (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.fan_love_devices (
+  content_id text not null references public.site_content(id) on delete cascade,
+  device_id text not null,
+  created_at timestamptz not null default now(),
+  primary key (content_id, device_id)
+);
+
 alter table public.site_content enable row level security;
 alter table public.admin_users enable row level security;
+alter table public.fan_love_devices enable row level security;
 
 drop policy if exists "Public can read site content" on public.site_content;
 create policy "Public can read site content"
@@ -69,7 +77,7 @@ values (
     "backgroundTheme": "theme-default",
     "whatsappNumber": "",
     "whatsappTicketMessage": "Hi, I would like to buy tickets for",
-    "loveCount": 128,
+    "loveCount": 0,
     "story": {
       "headline": "A voice that came through the fire",
       "body": "He faced cancer with faith, music, and the people who refused to let him stand alone. Beating it did not just give him more time, it gave every lyric a deeper reason. This space shares the music, the healing, and the message that nothing is impossible.",
@@ -112,7 +120,13 @@ values (
 )
 on conflict (id) do nothing;
 
-create or replace function public.increment_love_count(content_id text)
+update public.site_content
+set
+  content = jsonb_set(content, '{loveCount}', '0'::jsonb, true),
+  updated_at = now()
+where id = 'main';
+
+create or replace function public.increment_love_count(target_content_id text, visitor_device_id text)
 returns integer
 language plpgsql
 security definer
@@ -120,7 +134,23 @@ set search_path = public
 as $$
 declare
   next_count integer;
+  inserted_count integer;
 begin
+  insert into public.fan_love_devices (content_id, device_id)
+  values (target_content_id, visitor_device_id)
+  on conflict do nothing;
+
+  get diagnostics inserted_count = row_count;
+
+  if inserted_count = 0 then
+    select coalesce((content->>'loveCount')::integer, 0)
+    into next_count
+    from public.site_content
+    where id = target_content_id;
+
+    return coalesce(next_count, 0);
+  end if;
+
   update public.site_content
   set
     content = jsonb_set(
@@ -130,14 +160,14 @@ begin
       true
     ),
     updated_at = now()
-  where id = content_id
+  where id = target_content_id
   returning (content->>'loveCount')::integer into next_count;
 
-  return next_count;
+  return coalesce(next_count, 0);
 end;
 $$;
 
-grant execute on function public.increment_love_count(text) to anon, authenticated;
+grant execute on function public.increment_love_count(text, text) to anon, authenticated;
 
 insert into storage.buckets (id, name, public)
 values ('site-images', 'site-images', true)

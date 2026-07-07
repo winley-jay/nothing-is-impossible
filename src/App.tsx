@@ -110,12 +110,23 @@ type SiteData = {
 };
 
 const STORAGE_KEY = "nothing-is-impossible-site";
+const LOVE_DEVICE_KEY = "nothing-is-impossible-love-device";
+const LOVE_SENT_KEY = "nothing-is-impossible-love-sent-main";
 const ADMIN_PATH = "/studio-gift";
 const CONTENT_ID = "main";
 const STORAGE_BUCKET = "site-images";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
+
+const getLoveDeviceId = () => {
+  const savedId = localStorage.getItem(LOVE_DEVICE_KEY);
+  if (savedId) return savedId;
+
+  const nextId = crypto.randomUUID();
+  localStorage.setItem(LOVE_DEVICE_KEY, nextId);
+  return nextId;
+};
 
 const emptyRelease: Omit<Release, "id"> = {
   title: "",
@@ -189,7 +200,7 @@ const seedData: SiteData = {
   backgroundTheme: "theme-default",
   whatsappNumber: "",
   whatsappTicketMessage: "Hi, I would like to buy tickets for",
-  loveCount: 128,
+  loveCount: 0,
   story: {
     headline: "A voice that came through the fire",
     body:
@@ -294,6 +305,7 @@ export function App() {
   const [route, setRoute] = useState(() => window.location.pathname);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasSentLove, setHasSentLove] = useState(() => localStorage.getItem(LOVE_SENT_KEY) === "true");
   const isAdmin = Boolean(session);
 
   useEffect(() => {
@@ -351,10 +363,19 @@ export function App() {
   };
 
   const sendLove = async () => {
+    if (hasSentLove) return;
+
+    const deviceId = getLoveDeviceId();
+
     if (supabase) {
-      const { data: loveCount, error } = await supabase.rpc("increment_love_count", { content_id: CONTENT_ID });
+      const { data: loveCount, error } = await supabase.rpc("increment_love_count", {
+        target_content_id: CONTENT_ID,
+        visitor_device_id: deviceId,
+      });
       if (!error && typeof loveCount === "number") {
         setData((current) => ({ ...current, loveCount }));
+        localStorage.setItem(LOVE_SENT_KEY, "true");
+        setHasSentLove(true);
         return;
       }
     }
@@ -362,6 +383,8 @@ export function App() {
     const next = { ...data, loveCount: data.loveCount + 1 };
     setData(next);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    localStorage.setItem(LOVE_SENT_KEY, "true");
+    setHasSentLove(true);
   };
 
   if (isLoading) {
@@ -399,22 +422,24 @@ export function App() {
     if (window.location.pathname !== "/") {
       window.history.replaceState({}, "", "/");
     }
-    return <PublicSite data={data} onNavigate={navigate} onLove={sendLove} />;
+    return <PublicSite data={data} hasSentLove={hasSentLove} onNavigate={navigate} onLove={sendLove} />;
   }
 
   if (route.startsWith(ADMIN_PATH)) {
     return renderAdmin();
   }
 
-  return <PublicSite data={data} onNavigate={navigate} onLove={sendLove} />;
+  return <PublicSite data={data} hasSentLove={hasSentLove} onNavigate={navigate} onLove={sendLove} />;
 }
 
 function PublicSite({
   data,
+  hasSentLove,
   onNavigate,
   onLove,
 }: {
   data: SiteData;
+  hasSentLove: boolean;
   onNavigate: (path: string) => void;
   onLove: () => void;
 }) {
@@ -488,10 +513,11 @@ function PublicSite({
           <div className="hero-actions">
             <button
               className="primary-button"
+              disabled={hasSentLove}
               onClick={onLove}
             >
               <Heart size={18} fill="currentColor" />
-              Love you
+              {hasSentLove ? "Love sent" : "Love you"}
             </button>
             <a className="secondary-button" href="#story">
               My story
@@ -745,7 +771,6 @@ function AdminPage({
             <Lock size={18} />
             Log in
           </button>
-          <p className="hint">Use the Supabase Auth admin account created for this site.</p>
         </form>
       </main>
     );

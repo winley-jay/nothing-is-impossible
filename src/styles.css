@@ -481,6 +481,15 @@ button:hover,
   transform: translateY(-1px);
 }
 
+button:disabled,
+.primary-button:disabled {
+  cursor: default;
+  color: #ffffff;
+  background: #6f737b;
+  box-shadow: none;
+  transform: none;
+}
+
 .hero {
   width: min(1180px, calc(100% - 32px));
   min-height: calc(100vh - 90px);
