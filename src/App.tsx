@@ -518,7 +518,6 @@ function PublicSite({
       <nav className="topbar glass">
         <button className="brand-button" onClick={() => onNavigate("/")}>
           <span className="brand-mark">WinleyJay</span>
-          <span>{data.artistName}</span>
         </button>
         <div className="nav-links">
           <a href="#music">Music</a>
@@ -788,7 +787,6 @@ function AdminPage({
         <form className="login-panel glass" onSubmit={login}>
           <button type="button" className="brand-button" onClick={() => onNavigate("/")}>
             <span className="brand-mark">WinleyJay</span>
-            <span>{data.artistName}</span>
           </button>
           <div className="login-copy">
             <h1 className="align-center">Private studio</h1>
@@ -1357,7 +1355,6 @@ function MidnightHold({ data, onNavigate }: { data: SiteData; onNavigate: (path:
     <main className={`midnight-hold ${data.backgroundTheme}`}>
       <button className="brand-button midnight-brand" onClick={() => onNavigate(ADMIN_PATH)}>
         <span className="brand-mark">WinleyJay</span>
-        <span>{data.artistName}</span>
       </button>
       <section className="midnight-panel glass">
         <div className="sleepy-orb" aria-hidden="true">
